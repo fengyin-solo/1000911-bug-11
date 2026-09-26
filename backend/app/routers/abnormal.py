@@ -50,9 +50,13 @@ def create_entry(payload: EntryPayload) -> ActionResult:
 
 @router.post("/{entry_id}/actions", response_model=ActionResult)
 def run_action(entry_id: int, payload: EntryPayload) -> ActionResult:
-    """对单条不符合项执行分析原因、实施纠正、验证关闭；不允许的动作会被拦下并说明原因。"""
+    """对单条不符合项执行分析原因、实施纠正、验证关闭。
+
+    动作携带的字段（原因分析、纠正措施、验证人员）只落在这一条记录上；
+    状态不符、验证人员为空、记录已关闭等情况都会被拦下并说明原因。
+    """
     action = str(payload.values.get("action") or "").strip()
-    entry, message = service.run_action(entry_id, action)
+    entry, message = service.run_action(entry_id, action, payload.values)
     if entry is None:
         return ActionResult(ok=False, message=message)
     return ActionResult(ok=True, message=message, entry=entry)
